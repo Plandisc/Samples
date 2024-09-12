@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>plandisc.sample</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">Plandisc</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
+                aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+
+        <div class="row row-cols-lg-auto g-3 align-items-center">
+
+            <div class="col-12">
+                <label for="plandisc-picker">Select a plandisc</label>
+                <select id="plandisc-picker" class="form-select" onchange="fetchViews()">
+                    <option value="">Select a plandisc</option>
+                </select>
+            </div>
+
+            <div class="col-12">
+                <label for="view-picker">Select a embedded view</label>
+                <select id="view-picker" class="form-select" onchange="generateView()">
+                    <option value="">Select a view</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-12">
+            <hr class="col-4 my-4">
+
+            <div class="me-5 d-inline-block">
+                Fullscreen view url: <span id="view-url-fullscreen">N/A</span>
+            </div>
+            <div class="d-inline-block">
+                Embeded view url: <span id="view-url-embeded">N/A</span>
+            </div>
+            
+            <iframe id="view-preview" style="width:100%;min-height:800px"></iframe>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+    <script type="text/javascript">
+        (async function () {
+            const resp = await fetch('/api/plandiscs');
+            const data = await resp.json();
+            const plandiscPicker = document.querySelector('#plandisc-picker');
+            for (let index = 0; index < data.length; index++) {
+                const element = data[index];
+
+                plandiscPicker.appendChild(new Option(element.name, element.id));
+            }
+        })();
+
+        async function fetchViews() {
+            const plandiscId = document.querySelector('#plandisc-picker').value;
+            const plandiscPicker = document.querySelector('#view-picker');
+
+            const options = document.querySelectorAll('#view-picker option');
+            for (let i = 1; i < options.length; i++) {
+                plandiscPicker.remove(i);
+            }
+
+            if (!plandiscId) {
+                generateView();
+                return;
+            }
+
+            const resp = await fetch(`/api/views?plandiscId=${plandiscId}`);
+            const data = await resp.json();
+            for (let index = 0; index < data.length; index++) {
+                const element = data[index];
+                plandiscPicker.appendChild(new Option(element.name, element.id));
+            }
+        }
+
+        async function generateView() {
+            const viewId = document.querySelector('#view-picker').value;
+            const iframe = document.querySelector('#view-preview');
+            
+            const viewUrlFullscreen = document.querySelector('#view-url-fullscreen');
+            viewUrlFullscreen.innerHTML = 'N/A';
+            const viewUrlEmbeded = document.querySelector('#view-url-embeded');
+            viewUrlEmbeded.innerHTML = 'N/A';
+
+            if (!viewId) {
+                iframe.style.display = 'none';
+                return;
+            }
+
+            const fullscreenUrl = `https://create.plandisc.com/${viewId}`;
+            viewUrlFullscreen.innerHTML = fullscreenUrl;
+            const embededUrl = `https://create.plandisc.com/wheel/embed/${viewId}`;
+            viewUrlEmbeded.innerHTML = embededUrl;
+            iframe.setAttribute("src", embededUrl);
+            iframe.style.display = 'block';
+        } 
+    </script>
+</body>
+
+</html>
